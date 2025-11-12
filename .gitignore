@@ -1,0 +1,202 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Ignore bundler config.
+/.bundle
+
+# Ignore all logfiles and tempfiles.
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+!/tmp/pids/
+!/tmp/pids/.keep
+
+# Ignore pidfiles, but keep the directory.
+/tmp/pids/*
+!/tmp/pids/.keep
+
+# Ignore storage files.
+/storage/*
+!/storage/.keep
+/tmp/storage/*
+!/tmp/storage/.keep
+
+# Ignore uploaded files in development.
+/public/uploads
+
+# Ignore master key for decrypting credentials and more.
+/config/master.key
+/config/credentials/*.key
+
+# Ignore database files
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3-*
+
+# Ignore bootsnap cache
+/tmp/cache
+/tmp/cache/*
+
+# Ignore Byebug command history file.
+.byebug_history
+
+# Ignore node_modules (if using any JS)
+/node_modules
+/app/assets/builds/*
+!/app/assets/builds/.keep
+
+# Ignore yarn files (if using yarn)
+/yarn-error.log
+yarn-debug.log*
+.yarn-integrity
+
+# Ignore public compiled assets.
+/public/assets
+/public/packs
+/public/packs-test
+
+# Ignore precompiled javascript packs
+/app/javascript/packs/*.js
+/app/javascript/packs/*.js.map
+
+# Ignore uploaded files
+/public/system
+/public/uploads
+
+# IDEs and editors
+/.idea
+*.sublime-project
+*.sublime-workspace
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Ruby version managers
+.ruby-version
+.ruby-gemset
+.rvmrc
+.rbenv-version
+
+# RSpec
+/spec/tmp
+/coverage/
+/spec/examples.txt
+
+# SimpleCov
+/coverage
+
+# RuboCop
+.rubocop-*.yml
+
+# Pry
+.pry_history
+
+# Test files
+/spec/reports/
+/test/tmp/
+/test/version_tmp/
+
+# Documentation
+/doc/
+/rdoc/
+/.yardoc
+
+# Ignore Rails cache
+/tmp/cache/
+
+# Ignore bootsnap cache
+/tmp/cache/bootsnap*
+
+# Ignore Spring files
+/spring/*.pid
+
+# Ignore Capistrano customizations
+/config/deploy/*
+/vendor/bundle
+
+# Ignore pow configuration
+.powrc
+.powder
+
+# Ignore backup files
+*.bak
+*.orig
+
+# Ignore database dump files
+*.dump
+*.sql
+
+# Ignore Rails schemafile (uncomment if you want to ignore it)
+# /db/schema.rb
+
+# Ignore Redis dump
+dump.rdb
+
+# Ignore Elastic Beanstalk files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+
+# Ignore Heroku files
+.heroku/
+
+# Ignore Docker files (if not using Docker)
+# docker-compose.override.yml
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Ignore SSL certificates (if any)
+*.pem
+*.key
+*.crt
+*.csr
+
+# Ignore local config files
+/config/database.yml.local
+/config/secrets.yml.local
+/config/cable.yml.local
+
+# Ignore action_cable files in development
+/tmp/cable
+
+# Ignore persisted data from docker-compose
+/postgres-data
+
+# Ignore ctags
+tags
+tags.lock
+tags.temp
+
+# Ignore Emacs files
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+
+# Ignore Vim files
+*.swp
+*.swo
+*~
+.*.sw?
+
+# Ignore package manager directories
+bower_components/
+node_modules/
+
+# Keep essential directories
+!.gitkeep
