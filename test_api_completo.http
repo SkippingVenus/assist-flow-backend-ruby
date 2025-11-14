@@ -1,0 +1,826 @@
+### ============================================
+### ASSIST FLOW BACKEND - PRUEBAS API COMPLETAS
+### ============================================
+### 
+### Basado en la estructura REAL del backend Rails
+### Base URL: http://localhost:3000/api/v1
+### 
+### INSTRUCCIONES:
+### 1. Instala la extensión "REST Client" en VS Code (Ctrl+Shift+X)
+### 2. Ejecuta start_server.bat para iniciar el servidor
+### 3. Ejecuta los requests EN ORDEN (de arriba hacia abajo)
+### 4. Los tokens se guardan automáticamente en variables
+### 5. Los IDs se capturan automáticamente para usar en siguientes requests
+###
+### ESTRUCTURA DE DATOS:
+### - Companies: Empresas (con horarios de trabajo y almuerzo)
+### - Profiles: Usuarios admin (autenticación por email/password)
+### - Employees: Empleados (autenticación por PIN/password)
+### - AttendanceRecords: Marcas de asistencia (0=entrada, 1=salida, 2=inicio_almuerzo, 3=fin_almuerzo)
+### - VacationRequests: Solicitudes de vacaciones
+### - Notifications: Notificaciones para usuarios
+### - PayrollCalculations: Cálculos de planilla
+### ============================================
+
+@baseUrl = http://localhost:3000/api/v1
+
+### ============================================
+### 1. HEALTH CHECK - Verificar servidor
+### ============================================
+
+GET http://localhost:3000/health
+
+###
+
+### ============================================
+### 2. REGISTRO DE EMPRESA + ADMINISTRADOR
+### ============================================
+### Crea una empresa y su primer administrador
+### Devuelve: token JWT + datos del admin y empresa
+### IMPORTANTE: Este es el primer paso, ejecuta esto primero
+
+# @name registro
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "company": {
+    "name": "TechCorp S.A.",
+    "expected_start_time": "08:00:00",
+    "expected_end_time": "17:00:00",
+    "lunch_start_time": "12:00:00",
+    "lunch_end_time": "13:00:00"
+  },
+  "profile": {
+    "user_role": "admin",
+    "name": "Carlos Administrador",
+    "email": "admin@techcorp.com",
+    "password": "Admin123!"
+  }
+}
+
+### Guardar token y company_id automáticamente
+@adminToken = {{registro.response.body.$.data.token}}
+@companyId = {{registro.response.body.$.data.user.company_id}}
+
+###
+
+### ============================================
+### 3. LOGIN ADMINISTRADOR
+### ============================================
+### Si ya registraste antes, usa este endpoint para obtener un nuevo token
+
+# @name loginAdmin
+POST {{baseUrl}}/auth/admin/login
+Content-Type: application/json
+
+{
+  "email": "admin@techcorp.com",
+  "password": "Admin123!"
+}
+
+### Actualizar variables con la respuesta del login
+@adminToken = {{loginAdmin.response.body.$.data.token}}
+@companyId = {{loginAdmin.response.body.$.data.user.company_id}}
+
+###
+
+### ============================================
+### 4. OBTENER INFORMACIÓN DEL USUARIO ACTUAL
+### ============================================
+### Verifica quién está autenticado (admin o empleado)
+
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### 5. LISTAR EMPRESAS DISPONIBLES (PÚBLICO)
+### ============================================
+### Endpoint público para que empleados sepan su company_id
+
+GET {{baseUrl}}/auth/companies
+
+###
+
+### ============================================
+### 6. VER DETALLES DE LA EMPRESA
+### ============================================
+### Solo ADMIN puede ver detalles completos de su empresa
+
+GET {{baseUrl}}/companies/{{companyId}}
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### 7. ACTUALIZAR CONFIGURACIÓN DE LA EMPRESA
+### ============================================
+### Modificar horarios y datos de la empresa
+
+PATCH {{baseUrl}}/companies/{{companyId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "company": {
+    "name": "TechCorp S.A.C.",
+    "expected_start_time": "08:30:00",
+    "expected_end_time": "18:00:00",
+    "lunch_start_time": "12:30:00",
+    "lunch_end_time": "13:30:00"
+  }
+}
+
+###
+
+### ============================================
+### 8. VER UBICACIONES/GEOFENCES DE LA EMPRESA
+### ============================================
+
+GET {{baseUrl}}/companies/{{companyId}}/locations
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### 9. CREAR UBICACIÓN/GEOFENCE
+### ============================================
+### Registrar una ubicación válida para marcar asistencia
+
+# @name crearUbicacion
+POST {{baseUrl}}/companies/{{companyId}}/locations
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "location": {
+    "name": "Oficina Principal",
+    "latitude": -12.0464,
+    "longitude": -77.0428,
+    "radius": 100
+  }
+}
+
+@locationId = {{crearUbicacion.response.body.$.data.location.id}}
+
+###
+
+### ============================================
+### 10. ACTUALIZAR UBICACIÓN
+### ============================================
+
+PATCH {{baseUrl}}/companies/{{companyId}}/locations/{{locationId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "location": {
+    "radius": 150,
+    "name": "Oficina Central"
+  }
+}
+
+###
+
+### ============================================
+### 11. ELIMINAR UBICACIÓN
+### ============================================
+
+DELETE {{baseUrl}}/companies/{{companyId}}/locations/{{locationId}}
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### 12. CREAR EMPLEADO
+### ============================================
+### Solo ADMIN puede crear empleados
+### Devuelve: datos del empleado + PIN y PASSWORD generados automáticamente
+### ⚠️ IMPORTANTE: Guarda el PIN y password porque los necesitarás para el login
+
+# @name crearEmpleado
+POST {{baseUrl}}/employees
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "employee": {
+    "name": "Juan Pérez García",
+    "dni": "12345678",
+    "job_position": "Desarrollador",
+    "hourly_salary": 15.50,
+    "hourly_deduction": 10.00
+  }
+}
+
+### Guardar datos del empleado creado
+@employeeId = {{crearEmpleado.response.body.$.data.employee.id}}
+@employeePin = {{crearEmpleado.response.body.$.data.credentials.pin}}
+@employeePassword = {{crearEmpleado.response.body.$.data.credentials.password}}
+
+###
+
+### ============================================
+### 13. LISTAR EMPLEADOS
+### ============================================
+### Ver todos los empleados de la empresa
+### Filtros opcionales: ?is_active=true&search=juan
+
+GET {{baseUrl}}/employees
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### 14. LISTAR SOLO EMPLEADOS ACTIVOS
+### ============================================
+
+GET {{baseUrl}}/employees?is_active=true
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### 15. BUSCAR EMPLEADOS
+### ============================================
+
+GET {{baseUrl}}/employees?search=juan
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### 16. VER DETALLES DE UN EMPLEADO
+### ============================================
+### ADMIN: puede ver cualquier empleado de su empresa
+### EMPLEADO: solo puede ver sus propios datos
+
+GET {{baseUrl}}/employees/{{employeeId}}
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### 17. ACTUALIZAR EMPLEADO
+### ============================================
+
+PATCH {{baseUrl}}/employees/{{employeeId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "employee": {
+    "job_position": "Senior Developer",
+    "hourly_salary": 20.00,
+    "hourly_deduction": 12.00
+  }
+}
+
+###
+
+### ============================================
+### 18. RESETEAR CREDENCIALES DE EMPLEADO
+### ============================================
+### El admin puede generar nuevo PIN y/o contraseña
+### Útil cuando el empleado olvida sus credenciales
+
+# @name resetCredentials
+POST {{baseUrl}}/employees/{{employeeId}}/reset_credentials
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "reset_pin": true,
+  "reset_password": true
+}
+
+### Si se resetearon las credenciales, actualizar variables
+@employeePin = {{resetCredentials.response.body.$.data.new_credentials.pin}}
+@employeePassword = {{resetCredentials.response.body.$.data.new_credentials.password}}
+
+###
+
+### ============================================
+### 19. DESACTIVAR EMPLEADO (SOFT DELETE)
+### ============================================
+### Marca al empleado como inactivo sin borrarlo de la BD
+
+DELETE {{baseUrl}}/employees/{{employeeId}}
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### 20. CREAR SEGUNDO EMPLEADO PARA PRUEBAS
+### ============================================
+
+# @name crearEmpleado2
+POST {{baseUrl}}/employees
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "employee": {
+    "name": "María López Torres",
+    "dni": "87654321",
+    "job_position": "Diseñadora",
+    "hourly_salary": 18.00,
+    "hourly_deduction": 11.00
+  }
+}
+
+@employeeId2 = {{crearEmpleado2.response.body.$.data.employee.id}}
+@employeePin2 = {{crearEmpleado2.response.body.$.data.credentials.pin}}
+@employeePassword2 = {{crearEmpleado2.response.body.$.data.credentials.password}}
+
+###
+
+### ============================================
+### 21. LOGIN EMPLEADO
+### ============================================
+### El empleado se autentica con: company_id + PIN + password
+### ⚠️ IMPORTANTE: Usa el PIN y password devueltos al crear el empleado
+### O los nuevos si hiciste reset de credenciales
+
+# @name loginEmpleado
+POST {{baseUrl}}/auth/employee/login
+Content-Type: application/json
+
+{
+  "company_id": "{{companyId}}",
+  "pin": "{{employeePin}}",
+  "password": "{{employeePassword}}"
+}
+
+### Guardar token del empleado
+@employeeToken = {{loginEmpleado.response.body.$.data.token}}
+
+###
+
+### ============================================
+### 22. VER INFORMACIÓN DEL EMPLEADO ACTUAL
+### ============================================
+
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{employeeToken}}
+
+###
+
+### ============================================
+### 23. MARCAR ENTRADA (EMPLEADO)
+### ============================================
+### attendance_type: 0=entrance, 1=exit, 2=lunch_start, 3=lunch_end
+### El sistema detecta automáticamente si llegó tarde
+
+POST {{baseUrl}}/attendance_records
+Authorization: Bearer {{employeeToken}}
+Content-Type: application/json
+
+{
+  "attendance_type": 0,
+  "latitude": -12.0464,
+  "longitude": -77.0428
+}
+
+###
+
+### ============================================
+### 24. MARCAR INICIO DE ALMUERZO
+### ============================================
+
+POST {{baseUrl}}/attendance_records
+Authorization: Bearer {{employeeToken}}
+Content-Type: application/json
+
+{
+  "attendance_type": 2,
+  "latitude": -12.0464,
+  "longitude": -77.0428
+}
+
+###
+
+### ============================================
+### 25. MARCAR FIN DE ALMUERZO
+### ============================================
+
+POST {{baseUrl}}/attendance_records
+Authorization: Bearer {{employeeToken}}
+Content-Type: application/json
+
+{
+  "attendance_type": 3,
+  "latitude": -12.0464,
+  "longitude": -77.0428
+}
+
+###
+
+### ============================================
+### 26. MARCAR SALIDA
+### ============================================
+
+POST {{baseUrl}}/attendance_records
+Authorization: Bearer {{employeeToken}}
+Content-Type: application/json
+
+{
+  "attendance_type": 1,
+  "latitude": -12.0464,
+  "longitude": -77.0428
+}
+
+###
+
+### ============================================
+### 27. VER RESUMEN DEL DÍA ACTUAL (EMPLEADO)
+### ============================================
+### Muestra todas las marcas del día de hoy
+
+GET {{baseUrl}}/attendance_records/today
+Authorization: Bearer {{employeeToken}}
+
+###
+
+### ============================================
+### 28. VER HISTORIAL DE MARCAS POR EMPLEADO
+### ============================================
+### ADMIN: puede ver marcas de cualquier empleado
+### EMPLEADO: solo ve sus propias marcas
+### Filtros: ?start_date=2025-01-01&end_date=2025-01-31&limit=100
+
+GET {{baseUrl}}/attendance_records/employee/{{employeeId}}
+Authorization: Bearer {{employeeToken}}
+
+###
+
+### ============================================
+### 29. VER MARCAS CON FILTRO DE FECHA
+### ============================================
+
+GET {{baseUrl}}/attendance_records/employee/{{employeeId}}?start_date=2025-11-01&end_date=2025-11-30
+Authorization: Bearer {{employeeToken}}
+
+###
+
+### ============================================
+### 30. ESTADÍSTICAS MENSUALES DE ASISTENCIA
+### ============================================
+### Obtiene estadísticas del mes actual o especificado
+### Parámetros opcionales: ?month=11&year=2025
+
+GET {{baseUrl}}/attendance_records/stats/{{employeeId}}
+Authorization: Bearer {{employeeToken}}
+
+###
+
+### ============================================
+### 31. ESTADÍSTICAS DE UN MES ESPECÍFICO
+### ============================================
+
+GET {{baseUrl}}/attendance_records/stats/{{employeeId}}?month=11&year=2025
+Authorization: Bearer {{employeeToken}}
+
+###
+
+### ============================================
+### 32. REPORTE DIARIO DE LA EMPRESA (ADMIN)
+### ============================================
+### Ver todas las asistencias de la empresa en una fecha
+### Parámetro opcional: ?date=2025-11-13
+
+GET {{baseUrl}}/attendance_records/company/{{companyId}}/daily
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### 33. REPORTE DIARIO DE FECHA ESPECÍFICA
+### ============================================
+
+GET {{baseUrl}}/attendance_records/company/{{companyId}}/daily?date=2025-11-13
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### 34. SOLICITAR VACACIONES (EMPLEADO)
+### ============================================
+### El empleado solicita vacaciones
+
+# @name solicitarVacaciones
+POST {{baseUrl}}/vacation_requests
+Authorization: Bearer {{employeeToken}}
+Content-Type: application/json
+
+{
+  "start_date": "2025-12-20",
+  "end_date": "2025-12-27",
+  "reason": "Vacaciones de fin de año"
+}
+
+@vacationRequestId = {{solicitarVacaciones.response.body.$.data.vacation_request.id}}
+
+###
+
+### ============================================
+### 35. VER SOLICITUDES DE VACACIONES
+### ============================================
+### ADMIN: ve todas las solicitudes de la empresa
+### EMPLEADO: ve solo sus propias solicitudes
+### Filtros: ?status=pending&employee_id={{employeeId}}
+
+GET {{baseUrl}}/vacation_requests
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### 36. VER SOLICITUDES PENDIENTES
+### ============================================
+
+GET {{baseUrl}}/vacation_requests?status=pending
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### 37. VER SOLICITUDES DE UN EMPLEADO
+### ============================================
+
+GET {{baseUrl}}/vacation_requests?employee_id={{employeeId}}
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### 38. VER DETALLES DE UNA SOLICITUD
+### ============================================
+
+GET {{baseUrl}}/vacation_requests/{{vacationRequestId}}
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### 39. APROBAR SOLICITUD DE VACACIONES (ADMIN)
+### ============================================
+
+PATCH {{baseUrl}}/vacation_requests/{{vacationRequestId}}/approve
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### 40. RECHAZAR SOLICITUD DE VACACIONES (ADMIN)
+### ============================================
+
+PATCH {{baseUrl}}/vacation_requests/{{vacationRequestId}}/reject
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### 41. VER NOTIFICACIONES
+### ============================================
+### Ver notificaciones del usuario autenticado
+### Filtros: ?is_read=false&notification_type=attendance&limit=20
+
+GET {{baseUrl}}/notifications
+Authorization: Bearer {{employeeToken}}
+
+###
+
+### ============================================
+### 42. VER SOLO NOTIFICACIONES NO LEÍDAS
+### ============================================
+
+GET {{baseUrl}}/notifications?is_read=false
+Authorization: Bearer {{employeeToken}}
+
+###
+
+### ============================================
+### 43. VER NOTIFICACIONES POR TIPO
+### ============================================
+
+GET {{baseUrl}}/notifications?notification_type=attendance
+Authorization: Bearer {{employeeToken}}
+
+###
+
+### ============================================
+### 44. CONTAR NOTIFICACIONES NO LEÍDAS
+### ============================================
+
+GET {{baseUrl}}/notifications/unread_count
+Authorization: Bearer {{employeeToken}}
+
+###
+
+### ============================================
+### 45. MARCAR NOTIFICACIÓN COMO LEÍDA
+### ============================================
+### ⚠️ Primero ejecuta GET notifications para obtener un ID real
+
+@notificationId = 1
+
+PATCH {{baseUrl}}/notifications/{{notificationId}}/mark_read
+Authorization: Bearer {{employeeToken}}
+
+###
+
+### ============================================
+### 46. MARCAR TODAS LAS NOTIFICACIONES COMO LEÍDAS
+### ============================================
+
+PATCH {{baseUrl}}/notifications/mark_all_read
+Authorization: Bearer {{employeeToken}}
+
+###
+
+### ============================================
+### 47. ELIMINAR NOTIFICACIÓN
+### ============================================
+
+DELETE {{baseUrl}}/notifications/{{notificationId}}
+Authorization: Bearer {{employeeToken}}
+
+###
+
+### ============================================
+### 48. CALCULAR PLANILLA (ADMIN)
+### ============================================
+### Calcula la planilla de un empleado para un periodo
+
+POST {{baseUrl}}/payroll_calculations/calculate
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "employee_id": "{{employeeId}}",
+  "start_date": "2025-11-01",
+  "end_date": "2025-11-30"
+}
+
+###
+
+### ============================================
+### 49. VER CÁLCULOS DE PLANILLA
+### ============================================
+### Lista todos los cálculos de planilla
+### Filtros: ?employee_id={{employeeId}}&month=11&year=2025
+
+GET {{baseUrl}}/payroll_calculations
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### 50. VER PLANILLA DE UN EMPLEADO
+### ============================================
+
+GET {{baseUrl}}/payroll_calculations?employee_id={{employeeId}}
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### 51. VER PLANILLA DE UN MES ESPECÍFICO
+### ============================================
+
+GET {{baseUrl}}/payroll_calculations?month=11&year=2025
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### 52. VER DETALLES DE UN CÁLCULO DE PLANILLA
+### ============================================
+
+@payrollId = 1
+
+GET {{baseUrl}}/payroll_calculations/{{payrollId}}
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### 53. REPORTE DE ASISTENCIA (ADMIN)
+### ============================================
+### Reporte detallado de asistencias con filtros de fecha
+
+GET {{baseUrl}}/reports/attendance?start_date=2025-11-01&end_date=2025-11-30
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### 54. REPORTE DE TARDANZAS (ADMIN)
+### ============================================
+### Lista empleados que llegaron tarde
+
+GET {{baseUrl}}/reports/tardiness?start_date=2025-11-01&end_date=2025-11-30
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### 55. EXPORTAR PLANILLA A EXCEL (ADMIN)
+### ============================================
+### Descarga un archivo Excel con la planilla
+
+GET {{baseUrl}}/reports/payroll_excel?month=11&year=2025
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### 56. DASHBOARD GENERAL (ADMIN)
+### ============================================
+### Vista general con estadísticas de la empresa
+
+GET {{baseUrl}}/reports/dashboard
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### PRUEBAS ADICIONALES
+### ============================================
+
+### Crear tercer empleado
+# @name crearEmpleado3
+POST {{baseUrl}}/employees
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "employee": {
+    "name": "Pedro Sánchez Ruiz",
+    "dni": "45678912",
+    "job_position": "Analista",
+    "hourly_salary": 16.00,
+    "hourly_deduction": 9.50
+  }
+}
+
+###
+
+### Solicitud de vacaciones como admin (para otro empleado)
+POST {{baseUrl}}/vacation_requests
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "employee_id": "{{employeeId2}}",
+  "start_date": "2025-12-01",
+  "end_date": "2025-12-07",
+  "reason": "Vacaciones programadas"
+}
+
+###
+
+### ============================================
+### NOTAS IMPORTANTES:
+### ============================================
+### 
+### 1. ORDEN DE EJECUCIÓN:
+###    - Ejecuta Health Check primero
+###    - Luego Registro (#2) o Login (#3)
+###    - Crea empleados (#12)
+###    - Haz login como empleado (#21)
+###    - Prueba las marcas de asistencia (#23-26)
+###
+### 2. VARIABLES AUTOMÁTICAS:
+###    - @adminToken: Token del administrador
+###    - @employeeToken: Token del empleado
+###    - @companyId: ID de la empresa
+###    - @employeeId: ID del empleado creado
+###    - @employeePin: PIN del empleado
+###    - @employeePassword: Password del empleado
+###
+### 3. TIPOS DE ASISTENCIA:
+###    - 0: entrance (entrada)
+###    - 1: exit (salida)
+###    - 2: lunch_start (inicio de almuerzo)
+###    - 3: lunch_end (fin de almuerzo)
+###
+### 4. ESTADOS DE VACACIONES:
+###    - 0: pending (pendiente)
+###    - 1: approved (aprobada)
+###    - 2: rejected (rechazada)
+###
+### 5. PERMISOS:
+###    - ADMIN: Puede ver/modificar todo de su empresa
+###    - EMPLEADO: Solo ve sus propios datos
+###
+### 6. ERRORES COMUNES:
+###    - 401 Unauthorized: Token inválido o expirado (ejecuta login de nuevo)
+###    - 403 Forbidden: No tienes permiso para esa operación
+###    - 404 Not Found: El recurso no existe
+###    - 422 Unprocessable Entity: Datos inválidos
+###
+### ============================================
