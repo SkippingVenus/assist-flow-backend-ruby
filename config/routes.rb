@@ -12,13 +12,13 @@ Rails.application.routes.draw do
       get 'auth/companies', to: 'auth#companies'
       
       # Companies
-      resources :companies, only: [:show, :update] do
+      resources :companies, only: [:index, :show, :update] do
         member do
           get 'locations', to: 'companies#locations'
-          post 'locations', to: 'companies#create_location'
+          post 'locations', to: 'companies#add_location'
+          put 'locations/:location_id', to: 'companies#update_location'
+          delete 'locations/:location_id', to: 'companies#remove_location'
         end
-        
-        resources :locations, only: [:update, :destroy], controller: 'company_locations'
       end
       
       # Employees

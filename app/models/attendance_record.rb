@@ -4,27 +4,30 @@
 #
 #  id              :uuid             not null, primary key
 #  employee_id     :uuid             not null
-#  attendance_type :string           not null
+#  company_id      :uuid             not null
+#  attendance_type :integer          not null
 #  timestamp       :datetime         not null
 #  record_date     :date             not null
 #  is_late         :boolean          default(FALSE)
 #  minutes_late    :integer          default(0)
 #  latitude        :decimal(10, 8)
 #  longitude       :decimal(11, 8)
+#  notes           :text
 #  created_at      :datetime         not null
+#  updated_at      :datetime         not null
 #
 
 class AttendanceRecord < ApplicationRecord
   # Relationships
   belongs_to :employee
-  has_one :company, through: :employee
+  belongs_to :company
   
   # Enums
   enum attendance_type: {
-    entrance: 'entrance',
-    exit: 'exit',
-    lunch_start: 'lunch_start',
-    lunch_end: 'lunch_end'
+    entrance: 0,
+    exit: 1,
+    lunch_start: 2,
+    lunch_end: 3
   }
   
   # Validations
@@ -47,7 +50,7 @@ class AttendanceRecord < ApplicationRecord
   
   # Instance methods
   def check_tardiness
-    return unless entrance? && employee.company.expected_start_time
+    return unless entrance? && employee.company.work_start_time
     
     self.is_late = employee.company.is_late?(timestamp)
     self.minutes_late = employee.company.calculate_late_minutes(timestamp) if is_late

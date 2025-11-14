@@ -1,0 +1,1070 @@
+================================================================================
+GUÍA COMPLETA DE ENDPOINTS PARA POSTMAN - ASSIST FLOW API
+================================================================================
+
+BASE URL: http://localhost:3000
+
+================================================================================
+1. HEALTH CHECK (Sin autenticación)
+================================================================================
+
+Método: GET
+URL: http://localhost:3000/health
+Headers: (ninguno)
+Body: (ninguno)
+
+Respuesta esperada: 200 OK
+{
+  "status": "ok"
+}
+
+================================================================================
+2. OBTENER LISTA DE EMPRESAS (Sin autenticación)
+================================================================================
+
+Método: GET
+URL: http://localhost:3000/api/v1/auth/companies
+Headers: (ninguno)
+Body: (ninguno)
+
+Respuesta esperada: 200 OK
+[
+  {
+    "id": "uuid-de-empresa",
+    "name": "Nombre de Empresa"
+  }
+]
+
+================================================================================
+3. REGISTRAR ADMINISTRADOR Y EMPRESA (Sin autenticación)
+================================================================================
+
+Método: POST
+URL: http://localhost:3000/api/v1/auth/register
+Headers:
+  Content-Type: application/json
+
+Body (JSON):
+{
+  "profile": {
+    "full_name": "Juan Pérez",
+    "email": "admin@miempresa.com",
+    "password": "password123"
+  },
+  "company": {
+    "name": "Mi Empresa S.A.",
+    "work_start_time": "08:00",
+    "work_end_time": "17:00",
+    "late_threshold_minutes": 15
+  }
+}
+
+Respuesta esperada: 201 Created
+{
+  "success": true,
+  "data": {
+    "message": "Administrador y empresa creados exitosamente",
+    "token": "eyJhbGciOiJIUzI1NiJ9...",
+    "user": {
+      "id": "uuid",
+      "name": "Juan Pérez",
+      "email": "admin@miempresa.com",
+      "company_id": "uuid",
+      "company_name": "Mi Empresa S.A."
+    }
+  }
+}
+
+IMPORTANTE: Guarda el TOKEN de la respuesta para usarlo en los siguientes endpoints.
+
+================================================================================
+4. LOGIN ADMINISTRADOR (Sin autenticación)
+================================================================================
+
+Método: POST
+URL: http://localhost:3000/api/v1/auth/admin/login
+Headers:
+  Content-Type: application/json
+
+Body (JSON):
+{
+  "email": "admin@miempresa.com",
+  "password": "password123"
+}
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": {
+    "message": "Login exitoso",
+    "token": "eyJhbGciOiJIUzI1NiJ9...",
+    "user": {
+      "id": "uuid",
+      "name": "Juan Pérez",
+      "email": "admin@miempresa.com",
+      "company_id": "uuid",
+      "company_name": "Mi Empresa S.A."
+    }
+  }
+}
+
+IMPORTANTE: Guarda el TOKEN de la respuesta.
+
+================================================================================
+5. OBTENER USUARIO ACTUAL (Requiere autenticación)
+================================================================================
+
+Método: GET
+URL: http://localhost:3000/api/v1/auth/me
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+
+Body: (ninguno)
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": {
+    "type": "admin",
+    "user": {
+      "id": "uuid",
+      "name": "Juan Pérez",
+      "email": "admin@miempresa.com",
+      "company_id": "uuid",
+      "company_name": "Mi Empresa S.A."
+    }
+  }
+}
+
+================================================================================
+6. CREAR EMPLEADO (Requiere autenticación de admin)
+================================================================================
+
+Método: POST
+URL: http://localhost:3000/api/v1/employees
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+  Content-Type: application/json
+
+Body (JSON):
+{
+  "name": "Carlos Empleado",
+  "dni": "12345678",
+  "email": "carlos@empresa.com",
+  "phone": "987654321",
+  "job_position": "Desarrollador",
+  "salary": 3000.00
+}
+
+Respuesta esperada: 201 Created
+{
+  "success": true,
+  "data": {
+    "message": "Empleado creado exitosamente",
+    "employee": {
+      "id": "uuid",
+      "name": "Carlos Empleado",
+      "dni": "12345678",
+      "email": "carlos@empresa.com",
+      "phone": "987654321",
+      "job_position": "Desarrollador",
+      "salary": 3000.0,
+      "is_active": true,
+      "company_id": "uuid"
+    },
+    "credentials": {
+      "pin": "1234",
+      "password": "abc12345"
+    }
+  }
+}
+
+IMPORTANTE: Guarda el PIN y PASSWORD del empleado para usarlos en el login.
+
+================================================================================
+7. LISTAR TODOS LOS EMPLEADOS (Requiere autenticación de admin)
+================================================================================
+
+Método: GET
+URL: http://localhost:3000/api/v1/employees
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+
+Body: (ninguno)
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "name": "Carlos Empleado",
+      "dni": "12345678",
+      "email": "carlos@empresa.com",
+      "phone": "987654321",
+      "job_position": "Desarrollador",
+      "salary": 3000.0,
+      "is_active": true,
+      "company_id": "uuid"
+    }
+  ]
+}
+
+================================================================================
+8. OBTENER EMPLEADO POR ID (Requiere autenticación)
+================================================================================
+
+Método: GET
+URL: http://localhost:3000/api/v1/employees/[ID-DEL-EMPLEADO]
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+
+Body: (ninguno)
+
+Ejemplo:
+URL: http://localhost:3000/api/v1/employees/559d2bfd-7662-4e1a-b505-6c10e1a81060
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "name": "Carlos Empleado",
+    "dni": "12345678",
+    "email": "carlos@empresa.com",
+    "phone": "987654321",
+    "job_position": "Desarrollador",
+    "salary": 3000.0,
+    "is_active": true,
+    "company_id": "uuid",
+    "company_name": "Mi Empresa S.A.",
+    "created_at": "2025-11-14T06:10:45.023Z",
+    "updated_at": "2025-11-14T06:10:45.023Z"
+  }
+}
+
+================================================================================
+9. ACTUALIZAR EMPLEADO (Requiere autenticación de admin)
+================================================================================
+
+Método: PATCH
+URL: http://localhost:3000/api/v1/employees/[ID-DEL-EMPLEADO]
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+  Content-Type: application/json
+
+Body (JSON):
+{
+  "name": "Carlos Empleado Actualizado",
+  "email": "carlos.nuevo@empresa.com",
+  "phone": "999888777",
+  "job_position": "Senior Developer",
+  "salary": 3500.00,
+  "is_active": true
+}
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": {
+    "message": "Empleado actualizado exitosamente",
+    "employee": {
+      "id": "uuid",
+      "name": "Carlos Empleado Actualizado",
+      ...
+    }
+  }
+}
+
+================================================================================
+10. DESACTIVAR EMPLEADO (Requiere autenticación de admin)
+================================================================================
+
+Método: DELETE
+URL: http://localhost:3000/api/v1/employees/[ID-DEL-EMPLEADO]
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+
+Body: (ninguno)
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": {
+    "message": "Empleado desactivado exitosamente"
+  }
+}
+
+================================================================================
+11. RESETEAR CREDENCIALES DE EMPLEADO (Requiere autenticación de admin)
+================================================================================
+
+Método: POST
+URL: http://localhost:3000/api/v1/employees/[ID-DEL-EMPLEADO]/reset_credentials
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+  Content-Type: application/json
+
+Body (JSON):
+{
+  "reset_pin": true,
+  "reset_password": true
+}
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": {
+    "message": "Credenciales reseteadas exitosamente",
+    "employee": {
+      "id": "uuid",
+      "name": "Carlos Empleado",
+      "dni": "12345678"
+    },
+    "new_credentials": {
+      "pin": "5678",
+      "password": "xyz98765"
+    }
+  }
+}
+
+================================================================================
+12. LOGIN EMPLEADO (Sin autenticación)
+================================================================================
+
+Método: POST
+URL: http://localhost:3000/api/v1/auth/employee/login
+Headers:
+  Content-Type: application/json
+
+Body (JSON):
+{
+  "company_id": "[ID-DE-LA-EMPRESA]",
+  "pin": "1234",
+  "password": "abc12345"
+}
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": {
+    "message": "Login exitoso",
+    "token": "eyJhbGciOiJIUzI1NiJ9...",
+    "employee": {
+      "id": "uuid",
+      "name": "Carlos Empleado",
+      "dni": "12345678",
+      "job_position": "Desarrollador",
+      "company_id": "uuid"
+    }
+  }
+}
+
+================================================================================
+NOTAS IMPORTANTES
+================================================================================
+
+1. El TOKEN se obtiene después de hacer login (admin o employee)
+2. El TOKEN debe incluirse en el header Authorization con el formato:
+   Authorization: Bearer [TOKEN]
+3. Todos los endpoints que requieren autenticación deben incluir este header
+4. Los IDs son UUIDs (ejemplo: 559d2bfd-7662-4e1a-b505-6c10e1a81060)
+5. No incluyas los dos puntos (:) antes del ID en la URL
+6. Las credenciales del empleado (PIN y password) se generan automáticamente
+   al crear el empleado
+
+================================================================================
+FLUJO RECOMENDADO PARA PRUEBAS
+================================================================================
+
+1. GET /health - Verificar que el servidor esté funcionando
+2. POST /api/v1/auth/register - Crear empresa y administrador
+3. POST /api/v1/auth/admin/login - Obtener token de admin
+4. GET /api/v1/auth/me - Verificar sesión
+5. POST /api/v1/employees - Crear empleado (guardar credenciales)
+6. GET /api/v1/employees - Listar empleados
+7. GET /api/v1/employees/:id - Ver detalle de empleado
+8. POST /api/v1/auth/employee/login - Login como empleado
+
+================================================================================
+13. LISTAR EMPRESAS (Requiere autenticación)
+================================================================================
+
+Método: GET
+URL: http://localhost:3000/api/v1/companies
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+
+Body: (ninguno)
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "name": "Mi Empresa S.A.",
+      "work_start_time": "2000-01-01T08:00:00.000Z",
+      "work_end_time": "2000-01-01T17:00:00.000Z",
+      "late_threshold_minutes": 15,
+      "created_at": "2025-11-14T05:57:33.653Z",
+      "updated_at": "2025-11-14T05:57:33.653Z"
+    }
+  ]
+}
+
+================================================================================
+14. OBTENER DETALLES DE EMPRESA (Requiere autenticación de admin)
+================================================================================
+
+Método: GET
+URL: http://localhost:3000/api/v1/companies/[ID-DE-LA-EMPRESA]
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+
+Body: (ninguno)
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "name": "Mi Empresa S.A.",
+    "work_start_time": "2000-01-01T08:00:00.000Z",
+    "work_end_time": "2000-01-01T17:00:00.000Z",
+    "late_threshold_minutes": 15,
+    "locations": [...],
+    "total_employees": 5,
+    "total_locations": 2
+  }
+}
+
+================================================================================
+15. ACTUALIZAR EMPRESA (Requiere autenticación de admin)
+================================================================================
+
+Método: PUT
+URL: http://localhost:3000/api/v1/companies/[ID-DE-LA-EMPRESA]
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+  Content-Type: application/json
+
+Body (JSON):
+{
+  "name": "Mi Empresa Actualizada S.A.",
+  "work_start_time": "07:30",
+  "work_end_time": "16:30",
+  "late_threshold_minutes": 10
+}
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": {
+    "message": "Empresa actualizada exitosamente",
+    "company": {
+      "id": "uuid",
+      "name": "Mi Empresa Actualizada S.A.",
+      ...
+    }
+  }
+}
+
+================================================================================
+16. AGREGAR UBICACIÓN A EMPRESA (Requiere autenticación de admin)
+================================================================================
+
+Método: POST
+URL: http://localhost:3000/api/v1/companies/[ID-DE-LA-EMPRESA]/locations
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+  Content-Type: application/json
+
+Body (JSON):
+{
+  "name": "Oficina Principal",
+  "latitude": -12.046374,
+  "longitude": -77.042793,
+  "radius_meters": 100
+}
+
+Respuesta esperada: 201 Created
+{
+  "success": true,
+  "data": {
+    "message": "Ubicación agregada exitosamente",
+    "location": {
+      "id": "uuid",
+      "company_id": "uuid",
+      "name": "Oficina Principal",
+      "latitude": -12.046374,
+      "longitude": -77.042793,
+      "radius_meters": 100
+    }
+  }
+}
+
+================================================================================
+17. ACTUALIZAR UBICACIÓN (Requiere autenticación de admin)
+================================================================================
+
+Método: PUT
+URL: http://localhost:3000/api/v1/companies/[ID-DE-LA-EMPRESA]/locations/[ID-UBICACION]
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+  Content-Type: application/json
+
+Body (JSON):
+{
+  "name": "Oficina Principal Actualizada",
+  "latitude": -12.046500,
+  "longitude": -77.042800,
+  "radius_meters": 150
+}
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": {
+    "message": "Ubicación actualizada exitosamente",
+    "location": {...}
+  }
+}
+
+================================================================================
+18. ELIMINAR UBICACIÓN (Requiere autenticación de admin)
+================================================================================
+
+Método: DELETE
+URL: http://localhost:3000/api/v1/companies/[ID-DE-LA-EMPRESA]/locations/[ID-UBICACION]
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+
+Body: (ninguno)
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": {
+    "message": "Ubicación eliminada exitosamente"
+  }
+}
+
+================================================================================
+19. REGISTRAR ASISTENCIA (Requiere autenticación de empleado)
+================================================================================
+
+Método: POST
+URL: http://localhost:3000/api/v1/attendance_records
+Headers:
+  Authorization: Bearer [TOKEN-DE-EMPLEADO]
+  Content-Type: application/json
+
+Body (JSON):
+{
+  "attendance_type": "entrance",
+  "latitude": -12.046374,
+  "longitude": -77.042793
+}
+
+NOTA: attendance_type puede ser: "entrance", "exit", "lunch_start", "lunch_end"
+
+Respuesta esperada: 201 Created
+{
+  "success": true,
+  "data": {
+    "message": "Asistencia registrada exitosamente",
+    "record": {
+      "id": "uuid",
+      "attendance_type": "entrance",
+      "timestamp": "2025-11-14T08:05:00.000Z",
+      "is_late": true,
+      "minutes_late": 5
+    }
+  }
+}
+
+================================================================================
+20. OBTENER ASISTENCIA DEL DÍA (Requiere autenticación de empleado)
+================================================================================
+
+Método: GET
+URL: http://localhost:3000/api/v1/attendance_records/today
+Headers:
+  Authorization: Bearer [TOKEN-DE-EMPLEADO]
+
+Body: (ninguno)
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": {
+    "date": "2025-11-14",
+    "employee_id": "uuid",
+    "employee_name": "Carlos Empleado",
+    "records": [...],
+    "has_entrance": true,
+    "has_exit": false
+  }
+}
+
+================================================================================
+21. OBTENER ASISTENCIAS POR EMPLEADO (Requiere autenticación)
+================================================================================
+
+Método: GET
+URL: http://localhost:3000/api/v1/attendance_records/employee/[ID-EMPLEADO]
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+
+Query Params (opcionales):
+  ?start_date=2025-11-01&end_date=2025-11-30&limit=100
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "employee_id": "uuid",
+      "attendance_type": "entrance",
+      "timestamp": "2025-11-14T08:05:00.000Z",
+      "is_late": true,
+      "minutes_late": 5,
+      "latitude": -12.046374,
+      "longitude": -77.042793
+    }
+  ]
+}
+
+================================================================================
+22. REPORTE DIARIO DE EMPRESA (Requiere autenticación de admin)
+================================================================================
+
+Método: GET
+URL: http://localhost:3000/api/v1/attendance_records/company/[ID-EMPRESA]/daily
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+
+Query Params (opcionales):
+  ?date=2025-11-14
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": {
+    "date": "2025-11-14",
+    "total_employees": 10,
+    "present": 8,
+    "absent": 2,
+    "late": 3,
+    "records": [...]
+  }
+}
+
+================================================================================
+23. ESTADÍSTICAS DE ASISTENCIA (Requiere autenticación)
+================================================================================
+
+Método: GET
+URL: http://localhost:3000/api/v1/attendance_records/stats/[ID-EMPLEADO]
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+
+Query Params (opcionales):
+  ?month=11&year=2025
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": {
+    "month": 11,
+    "year": 2025,
+    "total_days_worked": 20,
+    "total_hours_worked": 160,
+    "late_days": 3,
+    "total_late_minutes": 45,
+    "on_time_percentage": 85.0
+  }
+}
+
+================================================================================
+24. LISTAR SOLICITUDES DE VACACIONES (Requiere autenticación)
+================================================================================
+
+Método: GET
+URL: http://localhost:3000/api/v1/vacation_requests
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+
+Query Params (opcionales):
+  ?status=pending&employee_id=[UUID]
+
+NOTA: status puede ser: "pending", "approved", "rejected"
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "employee_id": "uuid",
+      "company_id": "uuid",
+      "start_date": "2025-12-20",
+      "end_date": "2025-12-30",
+      "reason": "Vacaciones de fin de año",
+      "status": "pending",
+      "reviewed_at": null,
+      "reviewed_by_id": null
+    }
+  ]
+}
+
+================================================================================
+25. CREAR SOLICITUD DE VACACIONES (Requiere autenticación)
+================================================================================
+
+Método: POST
+URL: http://localhost:3000/api/v1/vacation_requests
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+  Content-Type: application/json
+
+Body (JSON) - Como empleado:
+{
+  "start_date": "2025-12-20",
+  "end_date": "2025-12-30",
+  "reason": "Vacaciones de fin de año"
+}
+
+Body (JSON) - Como admin (para crear solicitud de un empleado):
+{
+  "employee_id": "[ID-EMPLEADO]",
+  "start_date": "2025-12-20",
+  "end_date": "2025-12-30",
+  "reason": "Vacaciones de fin de año"
+}
+
+Respuesta esperada: 201 Created
+{
+  "success": true,
+  "data": {
+    "message": "Solicitud de vacaciones creada exitosamente",
+    "vacation_request": {
+      "id": "uuid",
+      "employee_id": "uuid",
+      "start_date": "2025-12-20",
+      "end_date": "2025-12-30",
+      "reason": "Vacaciones de fin de año",
+      "status": "pending"
+    }
+  }
+}
+
+================================================================================
+26. APROBAR SOLICITUD DE VACACIONES (Requiere autenticación de admin)
+================================================================================
+
+Método: PATCH
+URL: http://localhost:3000/api/v1/vacation_requests/[ID-SOLICITUD]/approve
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+
+Body: (ninguno)
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": {
+    "message": "Solicitud de vacaciones aprobada",
+    "vacation_request": {
+      "id": "uuid",
+      "status": "approved",
+      "reviewed_at": "2025-11-14T10:30:00.000Z"
+    }
+  }
+}
+
+================================================================================
+27. RECHAZAR SOLICITUD DE VACACIONES (Requiere autenticación de admin)
+================================================================================
+
+Método: PATCH
+URL: http://localhost:3000/api/v1/vacation_requests/[ID-SOLICITUD]/reject
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+
+Body: (ninguno)
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": {
+    "message": "Solicitud de vacaciones rechazada",
+    "vacation_request": {
+      "id": "uuid",
+      "status": "rejected",
+      "reviewed_at": "2025-11-14T10:30:00.000Z"
+    }
+  }
+}
+
+================================================================================
+28. LISTAR NOTIFICACIONES (Requiere autenticación)
+================================================================================
+
+Método: GET
+URL: http://localhost:3000/api/v1/notifications
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+
+Query Params (opcionales):
+  ?is_read=false&notification_type=vacation_request&limit=50
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "recipient_id": "uuid",
+      "recipient_type": "Profile",
+      "notification_type": "vacation_request",
+      "title": "Nueva solicitud de vacaciones",
+      "message": "Carlos Empleado ha solicitado vacaciones",
+      "is_read": false,
+      "created_at": "2025-11-14T10:00:00.000Z"
+    }
+  ]
+}
+
+================================================================================
+29. CONTAR NOTIFICACIONES NO LEÍDAS (Requiere autenticación)
+================================================================================
+
+Método: GET
+URL: http://localhost:3000/api/v1/notifications/unread_count
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+
+Body: (ninguno)
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": {
+    "unread_count": 5
+  }
+}
+
+================================================================================
+30. MARCAR NOTIFICACIÓN COMO LEÍDA (Requiere autenticación)
+================================================================================
+
+Método: PATCH
+URL: http://localhost:3000/api/v1/notifications/[ID-NOTIFICACION]/mark_read
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+
+Body: (ninguno)
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": {
+    "message": "Notificación marcada como leída"
+  }
+}
+
+================================================================================
+31. MARCAR TODAS LAS NOTIFICACIONES COMO LEÍDAS (Requiere autenticación)
+================================================================================
+
+Método: PATCH
+URL: http://localhost:3000/api/v1/notifications/mark_all_read
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+
+Body: (ninguno)
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": {
+    "message": "Todas las notificaciones marcadas como leídas"
+  }
+}
+
+================================================================================
+32. ELIMINAR NOTIFICACIÓN (Requiere autenticación)
+================================================================================
+
+Método: DELETE
+URL: http://localhost:3000/api/v1/notifications/[ID-NOTIFICACION]
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+
+Body: (ninguno)
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": {
+    "message": "Notificación eliminada"
+  }
+}
+
+================================================================================
+33. CALCULAR NÓMINA (Requiere autenticación de admin)
+================================================================================
+
+Método: POST
+URL: http://localhost:3000/api/v1/payroll_calculations/calculate
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+  Content-Type: application/json
+
+Body (JSON) - Para todos los empleados:
+{
+  "period_start": "2025-11-01",
+  "period_end": "2025-11-30"
+}
+
+Body (JSON) - Para un empleado específico:
+{
+  "period_start": "2025-11-01",
+  "period_end": "2025-11-30",
+  "employee_id": "[ID-EMPLEADO]"
+}
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": {
+    "message": "Nómina calculada exitosamente",
+    "calculations": [
+      {
+        "employee_id": "uuid",
+        "employee_name": "Carlos Empleado",
+        "total_days_worked": 22,
+        "total_hours_worked": 176,
+        "late_days": 3,
+        "base_salary": 3000.00,
+        "deductions": 150.00,
+        "net_pay": 2850.00
+      }
+    ]
+  }
+}
+
+================================================================================
+34. LISTAR CÁLCULOS DE NÓMINA (Requiere autenticación)
+================================================================================
+
+Método: GET
+URL: http://localhost:3000/api/v1/payroll_calculations
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+
+Query Params (opcionales):
+  ?employee_id=[UUID]&period_start=2025-11-01&period_end=2025-11-30
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "employee_id": "uuid",
+      "employee_name": "Carlos Empleado",
+      "period_start": "2025-11-01",
+      "period_end": "2025-11-30",
+      "total_days_worked": 22,
+      "net_pay": 2850.00
+    }
+  ]
+}
+
+================================================================================
+35. OBTENER DETALLE DE CÁLCULO DE NÓMINA (Requiere autenticación)
+================================================================================
+
+Método: GET
+URL: http://localhost:3000/api/v1/payroll_calculations/[ID-CALCULO]
+Headers:
+  Authorization: Bearer [TU-TOKEN-AQUI]
+
+Body: (ninguno)
+
+Respuesta esperada: 200 OK
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "employee_id": "uuid",
+    "employee_name": "Carlos Empleado",
+    "company_id": "uuid",
+    "period_start": "2025-11-01",
+    "period_end": "2025-11-30",
+    "total_days_worked": 22,
+    "total_hours_worked": 176,
+    "overtime_hours": 0,
+    "late_days": 3,
+    "total_late_minutes": 45,
+    "base_salary": 3000.00,
+    "overtime_pay": 0.00,
+    "bonus": 0.00,
+    "deductions": 150.00,
+    "total_earnings": 3000.00,
+    "net_pay": 2850.00,
+    "notes": null
+  }
+}
+
+================================================================================
+RESUMEN DE TIPOS DE AUTENTICACIÓN
+================================================================================
+
+SIN AUTENTICACIÓN:
+- GET /health
+- GET /api/v1/auth/companies
+- POST /api/v1/auth/register
+- POST /api/v1/auth/admin/login
+- POST /api/v1/auth/employee/login
+
+REQUIERE TOKEN DE ADMIN:
+- Todos los endpoints de empresas (companies)
+- Crear, actualizar, eliminar empleados
+- Resetear credenciales de empleados
+- Aprobar/rechazar solicitudes de vacaciones
+- Calcular nómina
+- Reportes de empresa
+
+REQUIERE TOKEN DE EMPLEADO:
+- Registrar asistencia
+- Ver asistencia del día
+- Crear solicitud de vacaciones
+- Ver sus propias notificaciones
+
+AMBOS (ADMIN O EMPLEADO):
+- GET /api/v1/auth/me
+- Ver sus propios datos
+- Ver notificaciones
+- Ver cálculos de nómina propios
+
+================================================================================
+CÓDIGOS DE ESTADO HTTP
+================================================================================
+
+200 OK - Petición exitosa
+201 Created - Recurso creado exitosamente
+400 Bad Request - Error en los parámetros enviados
+401 Unauthorized - No autenticado o token inválido
+403 Forbidden - No tiene permisos para esta acción
+404 Not Found - Recurso no encontrado
+422 Unprocessable Entity - Error de validación
+500 Internal Server Error - Error del servidor
+
+================================================================================
+FIN DE LA GUÍA
+================================================================================

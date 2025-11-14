@@ -29,6 +29,7 @@ class AttendanceViewModel
     
     # Create attendance record
     record = employee.attendance_records.new(
+      company_id: employee.company_id,
       attendance_type: params[:attendance_type],
       latitude: params[:latitude],
       longitude: params[:longitude]
@@ -60,7 +61,7 @@ class AttendanceViewModel
   
   # Validate if employee is within company location
   def self.validate_location(company, latitude, longitude)
-    locations = company.company_locations.active
+    locations = company.company_locations
     
     if locations.empty?
       return { valid: true, message: 'No location restrictions' }
@@ -146,6 +147,18 @@ class AttendanceViewModel
   
   private
   
+  # Instance method for record summary
+  def record_summary(record)
+    {
+      id: record.id,
+      attendance_type: record.attendance_type,
+      timestamp: record.timestamp,
+      is_late: record.is_late,
+      minutes_late: record.minutes_late
+    }
+  end
+  
+  # Class method for record summary
   def self.record_summary(record)
     {
       id: record.id,

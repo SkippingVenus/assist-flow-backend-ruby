@@ -8,8 +8,6 @@
 #  latitude       :decimal(10, 8)   not null
 #  longitude      :decimal(11, 8)   not null
 #  radius_meters  :integer          default(100)
-#  is_active      :boolean          default(TRUE)
-#  created_by     :uuid
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
 #
@@ -23,9 +21,6 @@ class CompanyLocation < ApplicationRecord
   validates :latitude, presence: true, numericality: { greater_than_or_equal_to: -90, less_than_or_equal_to: 90 }
   validates :longitude, presence: true, numericality: { greater_than_or_equal_to: -180, less_than_or_equal_to: 180 }
   validates :radius_meters, numericality: { greater_than: 0 }, allow_nil: true
-  
-  # Scopes
-  scope :active, -> { where(is_active: true) }
   
   # Instance methods
   def within_range?(lat, lng)
