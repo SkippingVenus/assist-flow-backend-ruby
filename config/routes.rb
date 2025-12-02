@@ -66,11 +66,11 @@ Rails.application.routes.draw do
       end
       
       # Reports
-      namespace :reports do
-        get 'attendance'
-        get 'tardiness'
-        get 'payroll_excel'
-        get 'dashboard'
+      scope module: :reports do
+        get 'reports/attendance', to: 'reports#attendance'
+        get 'reports/tardiness', to: 'reports#tardiness'
+        get 'reports/payroll_excel', to: 'reports#payroll_excel'
+        get 'reports/dashboard', to: 'reports#dashboard'
       end
     end
   end

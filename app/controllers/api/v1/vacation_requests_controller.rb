@@ -53,7 +53,10 @@ module Api
           return render_forbidden
         end
         
-        vacation_request = employee.vacation_requests.build(vacation_request_params)
+        vacation_request = employee.vacation_requests.build(vacation_request_params.merge(
+          company_id: employee.company_id,
+          status: 'pending'
+        ))
         
         if vacation_request.save
           render_success({
@@ -73,7 +76,7 @@ module Api
           return render_forbidden
         end
         
-        @vacation_request.approve!
+        @vacation_request.approve!(current_user)
         
         render_success({
           message: 'Solicitud de vacaciones aprobada',

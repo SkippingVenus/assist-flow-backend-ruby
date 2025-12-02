@@ -31,12 +31,13 @@ class VacationRequest < ApplicationRecord
   }
   
   # Validations
-  validates :start_date, :end_date, :total_days, presence: true
-  validates :status, inclusion: { in: statuses.keys }
+  validates :start_date, :end_date, presence: true
+  validates :status, inclusion: { in: statuses.values }, allow_nil: true
   validate :end_date_after_start_date
   
   # Callbacks
-  before_validation :calculate_total_days, on: :create
+  # No hay columna total_days en la BD actual
+  # before_validation :calculate_total_days, on: :create
   
   # Scopes
   scope :pending, -> { where(status: 'pending') }
@@ -49,16 +50,16 @@ class VacationRequest < ApplicationRecord
   def approve!(approved_by_profile)
     update!(
       status: 'approved',
-      approved_by: approved_by_profile.id,
-      approved_at: Time.current
+      reviewed_by_id: approved_by_profile.id,
+      reviewed_at: Time.current
     )
   end
   
   def reject!(approved_by_profile, reason)
     update!(
       status: 'rejected',
-      approved_by: approved_by_profile.id,
-      approved_at: Time.current,
+      reviewed_by_id: approved_by_profile.id,
+      reviewed_at: Time.current,
       rejection_reason: reason
     )
   end
@@ -67,7 +68,13 @@ class VacationRequest < ApplicationRecord
   
   def calculate_total_days
     return unless start_date && end_date
-    self.total_days = (end_date - start_date).to_i + 1
+    # Calculo manual sin guardar en BD - usar método total_days_count
+    # self.total_days = (end_date - start_date).to_i + 1
+  end
+  
+  def total_days_count
+    return 0 unless start_date && end_date
+    (end_date - start_date).to_i + 1
   end
   
   def end_date_after_start_date

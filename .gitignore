@@ -1,5 +1,5 @@
 # Environment variables
-.env
+# .env (permitido para facilitar configuración)
 .env.local
 .env.*.local
 
